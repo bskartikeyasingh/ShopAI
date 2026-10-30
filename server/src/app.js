@@ -15,7 +15,26 @@ import cartRoutes from './routes/cartRoutes.js';
 
 const app = express();
 
-app.use(cors({ origin: ENV.FRONTEND_ORIGIN, credentials: true }));
+
+const allowedOrigins = [
+  ENV.FRONTEND_ORIGIN,
+  'https://shopagent-client.onrender.com',
+  'http://localhost:5173',
+];
+
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      return callback(new Error('Origin not allowed by CORS'));
+    },
+    credentials: true,
+  })
+);
+
 app.use(express.json());
 app.use(morgan('dev'));
 
