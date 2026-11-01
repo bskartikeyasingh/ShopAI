@@ -8,10 +8,12 @@ import { Cart } from './models/Cart.js';
 import { Order } from './models/Order.js';
 import { AuditEvent } from './models/AuditEvent.js';
 
-const seedDatabase = async () => {
+export const seedDatabase = async ({ exitOnComplete = false } = {}) => {
   try {
-    await mongoose.connect(ENV.MONGODB_URI);
-    console.log('[Seed] Connected to MongoDB at:', ENV.MONGODB_URI);
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(ENV.MONGODB_URI);
+      console.log('[Seed] Connected to MongoDB at:', ENV.MONGODB_URI);
+    }
 
     // Clear existing collections
     await Promise.all([
@@ -474,11 +476,28 @@ const seedDatabase = async () => {
     console.log(`  * Audit Trail Events Pre-seeded: 6 compliance events`);
     console.log('======================================================\n');
 
-    process.exit(0);
+    if (exitOnComplete) {
+      process.exit(0);
+    }
+
+    return {
+      success: true,
+      productsCount: products.length,
+      sellersCount: 4,
+      ordersCount: 2
+    };
   } catch (error) {
     console.error('[Seed Error]:', error);
-    process.exit(1);
+    if (exitOnComplete) {
+      process.exit(1);
+    }
+    throw error;
   }
 };
 
-seedDatabase();
+export default seedDatabase;
+
+// Auto-run if executed directly as a script (e.g. `node src/seed.js`)
+if (process.argv[1] && process.argv[1].endsWith('seed.js')) {
+  seedDatabase({ exitOnComplete: true });
+}
